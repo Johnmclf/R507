@@ -54,6 +54,22 @@
                     {% endfor %}
                     </tbody>
                 </table>
+
+                <div class="paginate">
+                    {% if currentPage > 1 %}
+                        <a href="{{ path('main_list', {page: currentPage-1}) }}" class="btn btn-light float-start">
+                            Précédent
+                        </a>
+                    {% endif %}
+
+                    <button disabled class="disabled btn">Page {{ currentPage }} sur {{ totalPages }}</button>
+
+                    {% if currentPage < totalPages %}
+                        <a href="{{ path('main_list', {page: currentPage+1}) }}" class="btn btn-light float-end">
+                            Suivant
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
