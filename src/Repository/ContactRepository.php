@@ -1,11 +1,11 @@
 <?php
- 
+
 namespace App\Repository;
- 
+
 use App\Entity\Contact;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
- use function Doctrine\ORM\QueryBuilder;
+use function Doctrine\ORM\QueryBuilder;
 
 /**
  * @extends ServiceEntityRepository<Contact>
@@ -17,28 +17,56 @@ class ContactRepository extends ServiceEntityRepository
         parent::__construct($registry, Contact::class);
     }
 
-    //    /**
-    //     * @return Contact[] Returns an array of Contact objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('c.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * @return Contact[] Returns an array of Contact objects
+     */
+    public function findPaginatedByStatus(int $page, int $limit, ?string $status = null): array
+    {
+        $offset = ($page - 1) * $limit;
 
-    //    public function findOneBySomeField($value): ?Contact
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $qb = $this->createQueryBuilder('c');
+
+        if ($status && $status !== 'all') {
+            $qb->andWhere('c.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        return $qb
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByStatus(?string $status = null): int
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->select('count(c.id)');
+
+        if ($status && $status !== 'all') {
+            $qb->andWhere('c.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
+
+    /**
+     * @return Contact[] Returns an array of Contact objects
+     */
+    public function search(string $search): array
+    {
+        $qb = $this->createQueryBuilder('c');
+        return $qb
+            ->andWhere(
+                $qb->expr()->orX(
+                    $qb->expr()->like('c.firstName', ':search'),
+                    $qb->expr()->like('c.name', ':search'),
+                ),
+            )
+            ->setParameter('search', '%'.$search.'%')
+            ->getQuery()
+            ->getResult()
+            ;
+    }
 }
