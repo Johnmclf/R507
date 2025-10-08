@@ -1,31 +1,35 @@
 name: CD
-
+ 
 on:
-  push:
-    branches: [ develop, master ]
-
-  jobs:
-    deploy:
-      runs-on: ubuntu-latest
-
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - master
+ 
+jobs:
   deploy:
-  needs: test
-  if: github.ref == 'refs/heads/main'
-  runs-on: ubuntu-latest
-  
-  steps:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+ 
+    steps:
     - uses: actions/checkout@v3
-    - name: Deploy to FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+ 
+    - name: Install Dependencies
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2.12'
+    - run: composer install --no-dev --optimize-autoloader
+ 
+    - name: Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
       with:
         server: ${{ secrets.FTP_HOST }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        protocol: ftp
         port: ${{ secrets.FTP_PORT }}
-        script: |
-          cd /var/www/myapp
-          git pull origin main
-          composer install --no-dev
-          php bin/console cache:clear
-
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
