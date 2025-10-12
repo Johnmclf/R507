@@ -6,7 +6,8 @@ on:
     types:
       - completed
     branches:
-      - master, develop
+      - master
+      - develop
  
 jobs:
   deploy:
