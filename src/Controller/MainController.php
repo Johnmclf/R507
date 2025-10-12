@@ -69,7 +69,7 @@ final class MainController extends AbstractController
     }
 
     #[Route('/liste/{page}', name: 'list')]
-    public function list(ContactRepository $repository, Request $request, ?int $page = 1, ?string $status = "all"): Response
+    public function list(ContactRepository $repository, Request $request, ?int $page = 1, ?string $status = "all", ?string $search = "",): Response
     {
         $limit = 2;
         $status = $request->query->get('status', 'all');
