@@ -1,0 +1,48 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ develop, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2.12'
+      - run: composer install
+      - run: php bin/phpunit
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2.12'
+      - run: composer install --no-dev --optimize-autoloader
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
